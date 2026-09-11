@@ -6,6 +6,30 @@ local lgi = require("lgi")
 local Rsvg = lgi.require("Rsvg", "2.0")
 local cairo = lgi.cairo
 
+-- Resolve colors once when this script is loaded.
+local function read_color(name, fallback)
+  local value = ironbar:var_get("codex_color_" .. name)
+  if not value then
+    return fallback
+  end
+  local r, g, b, a = value:match("^%s*([^,]+),([^,]+),([^,]+),([^,]+)%s*$")
+  local rgba = { tonumber(r), tonumber(g), tonumber(b), tonumber(a) }
+  for i = 1, 4 do
+    local component = rgba[i]
+    if not component or component ~= component or component < 0 or component > 1 then
+      return fallback
+    end
+  end
+  return rgba
+end
+
+local colors = {
+  logo = read_color("logo", { 0, 0, 0, 1 }),
+  primary = read_color("primary", { 0.3, 1, 0.3, 0.7 }),
+  secondary = read_color("secondary", { 1, 0.3, 0.3, 0.7 }),
+  hands = read_color("hands", { 1, 1, 1, 1 }),
+}
+
 local status = assert(
   loadfile(ironbar.config_dir .. "/codex_widget/codex_status.lua")
 )()
@@ -29,7 +53,7 @@ local function draw(cr, width, height)
 
   cr:save()
   cr:rotate(-anglem)
-  cr:set_source_rgba(0, 0, 0, 1)
+  cr:set_source_rgba(unpack(colors.logo))
   cr:mask_surface(masks.logo, -size / 2, -size / 2)
   cr:fill()
   cr:restore()
@@ -41,7 +65,7 @@ local function draw(cr, width, height)
   cr:clip()
   cr:rotate(-anglem)
   -- sper=0
-  cr:set_source_rgba(0.3, 1, 0.3, 0.7)
+  cr:set_source_rgba(unpack(colors.primary))
   -- cr:set_source_rgba(1, 0.3, 0.3, 0.7)
   cr:mask_surface(masks.holes[1], -size / 2, -size / 2)
   cr:mask_surface(masks.holes[2], -size / 2, -size / 2)
@@ -59,7 +83,7 @@ local function draw(cr, width, height)
   cr:rotate(-anglem)
   -- sper=0
   -- cr:set_source_rgba(0.3, 1, 0.3, 0.7)
-  cr:set_source_rgba(1, 0.3, 0.3, 0.7)
+  cr:set_source_rgba(unpack(colors.secondary))
   cr:mask_surface(masks.holes[1], -size / 2, -size / 2)
   cr:mask_surface(masks.holes[2], -size / 2, -size / 2)
   cr:mask_surface(masks.holes[3], -size / 2, -size / 2)
@@ -75,7 +99,7 @@ local function draw(cr, width, height)
   local h = t["hour"] + m / 60
   cr:save()
   cr:rotate(h / 12 * 2 * math.pi)
-  cr:set_source_rgba(1, 1, 1, 1)
+  cr:set_source_rgba(unpack(colors.hands))
   cr:set_line_width(size / 20)
   cr:move_to(0, 0)
   cr:line_to(0, -size / 2 * 0.8)
@@ -86,7 +110,7 @@ local function draw(cr, width, height)
 
   cr:save()
   cr:rotate(m / 60 * 2 * math.pi)
-  cr:set_source_rgba(1, 1, 1, 1)
+  cr:set_source_rgba(unpack(colors.hands))
   cr:set_line_width(size / 30)
   cr:move_to(0, 0)
   cr:line_to(0, -size / 2)
